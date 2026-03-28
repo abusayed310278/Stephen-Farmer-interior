@@ -46,9 +46,14 @@ class UpdatePostCard extends StatelessWidget {
 
     final fallbackImage =
         'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop';
-    final postImage = (item.thumbnailUrl?.trim().isNotEmpty ?? false)
-        ? item.thumbnailUrl!.trim()
-        : fallbackImage;
+    final postImages = item.imageUrls
+        .where((url) => url.trim().isNotEmpty)
+        .map((url) => _resolveMediaUrl(url))
+        .where((url) => url.isNotEmpty)
+        .toList();
+    if (postImages.isEmpty) {
+      postImages.add(fallbackImage);
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -107,14 +112,9 @@ class UpdatePostCard extends StatelessWidget {
           SizedBox(
             height: 220,
             width: double.infinity,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                postImage,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Image.network(fallbackImage, fit: BoxFit.cover),
-              ),
+            child: _UpdateImageGallery(
+              imageUrls: postImages,
+              fallbackImage: fallbackImage,
             ),
           ),
           const SizedBox(height: 12),
@@ -181,6 +181,286 @@ class UpdatePostCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  String _resolveMediaUrl(String raw) {
+    final value = raw.trim().replaceAll('\\', '/');
+    if (value.isEmpty || value.toLowerCase() == 'null') return '';
+
+    final lower = value.toLowerCase();
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
+      return value;
+    }
+    if (value.startsWith('//')) return 'https:$value';
+
+    final trimmed = baseUrl.trim();
+    if (trimmed.isEmpty) return value;
+    final normalized = trimmed.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+    final uri = Uri.tryParse(normalized);
+    if (uri == null || uri.host.isEmpty) return normalized;
+
+    var host = uri.host;
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        (host == 'localhost' || host == '127.0.0.1')) {
+      host = '10.0.2.2';
+    }
+
+    final origin = Uri(
+      scheme: uri.scheme,
+      host: host,
+      port: uri.hasPort ? uri.port : null,
+    ).toString();
+    if (value.startsWith('/')) return '$origin$value';
+    return '$origin/$value';
+  }
+}
+
+class _UpdateImageGallery extends StatelessWidget {
+  const _UpdateImageGallery({
+    required this.imageUrls,
+    required this.fallbackImage,
+  });
+
+  final List<String> imageUrls;
+  final String fallbackImage;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final visibleImages = imageUrls.take(4).toList();
+          if (visibleImages.length == 1) {
+            return _GalleryTile(
+              imageUrl: visibleImages.first,
+              fallbackImage: fallbackImage,
+              onTap: () => _openViewer(context, 0),
+            );
+          }
+
+          if (visibleImages.length == 2) {
+            return Row(
+              children: [
+                for (var i = 0; i < visibleImages.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 2),
+                  Expanded(
+                    child: _GalleryTile(
+                      imageUrl: visibleImages[i],
+                      fallbackImage: fallbackImage,
+                      onTap: () => _openViewer(context, i),
+                    ),
+                  ),
+                ],
+              ],
+            );
+          }
+
+          final rightItems = visibleImages.sublist(1);
+          return Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: _GalleryTile(
+                  imageUrl: visibleImages.first,
+                  fallbackImage: fallbackImage,
+                  onTap: () => _openViewer(context, 0),
+                ),
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < rightItems.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 2),
+                      Expanded(
+                        child: _GalleryTile(
+                          imageUrl: rightItems[i],
+                          fallbackImage: fallbackImage,
+                          overlayText:
+                              i == rightItems.length - 1 &&
+                                  imageUrls.length > visibleImages.length
+                              ? '+${imageUrls.length - visibleImages.length}'
+                              : null,
+                          onTap: () => _openViewer(context, i + 1),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openViewer(BuildContext context, int initialIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _UpdateImageViewer(
+          imageUrls: imageUrls,
+          fallbackImage: fallbackImage,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+}
+
+class _GalleryTile extends StatelessWidget {
+  const _GalleryTile({
+    required this.imageUrl,
+    required this.fallbackImage,
+    required this.onTap,
+    this.overlayText,
+  });
+
+  final String imageUrl;
+  final String fallbackImage;
+  final VoidCallback onTap;
+  final String? overlayText;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _AuthorizedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            fallbackImage: fallbackImage,
+          ),
+          if (overlayText != null)
+            Container(
+              color: Colors.black.withValues(alpha: 0.38),
+              alignment: Alignment.center,
+              child: Text(
+                overlayText!,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpdateImageViewer extends StatefulWidget {
+  const _UpdateImageViewer({
+    required this.imageUrls,
+    required this.fallbackImage,
+    required this.initialIndex,
+  });
+
+  final List<String> imageUrls;
+  final String fallbackImage;
+  final int initialIndex;
+
+  @override
+  State<_UpdateImageViewer> createState() => _UpdateImageViewerState();
+}
+
+class _UpdateImageViewerState extends State<_UpdateImageViewer> {
+  late final PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('${_currentIndex + 1}/${widget.imageUrls.length}'),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.imageUrls.length,
+        onPageChanged: (index) => setState(() => _currentIndex = index),
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            minScale: 0.8,
+            maxScale: 4,
+            child: Center(
+              child: _AuthorizedNetworkImage(
+                imageUrl: widget.imageUrls[index],
+                fit: BoxFit.contain,
+                fallbackImage: widget.fallbackImage,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AuthorizedNetworkImage extends StatefulWidget {
+  const _AuthorizedNetworkImage({
+    required this.imageUrl,
+    required this.fit,
+    required this.fallbackImage,
+  });
+
+  final String imageUrl;
+  final BoxFit fit;
+  final String fallbackImage;
+
+  @override
+  State<_AuthorizedNetworkImage> createState() =>
+      _AuthorizedNetworkImageState();
+}
+
+class _AuthorizedNetworkImageState extends State<_AuthorizedNetworkImage> {
+  late final Future<String?> _tokenFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _tokenFuture = TokenManager.getToken();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: _tokenFuture,
+      builder: (context, snapshot) {
+        final token = snapshot.data?.trim() ?? '';
+        final headers = token.isEmpty
+            ? null
+            : <String, String>{'Authorization': 'Bearer $token'};
+
+        return Image.network(
+          widget.imageUrl,
+          fit: widget.fit,
+          headers: headers,
+          errorBuilder: (_, __, ___) =>
+              Image.network(widget.fallbackImage, fit: widget.fit),
+        );
+      },
     );
   }
 }

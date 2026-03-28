@@ -103,10 +103,7 @@ class _TaskDetailsScreenViewState extends State<TaskDetailsScreenView> {
     final roleKey = _authController.roleKey;
     final isClientUser = roleKey == 'client';
     if (isClientUser && !widget.item.isAwaitingApproval) {
-      Get.snackbar(
-        'Info',
-        'This task is not waiting for approval yet.',
-      );
+      Get.snackbar('Info', 'This task is not waiting for approval yet.');
       return;
     }
     if (!isClientUser && widget.item.isFinished) {
@@ -191,7 +188,7 @@ class _TaskDetailsScreenViewState extends State<TaskDetailsScreenView> {
       context: context,
       builder: (context) {
         return AlertDialog(
-        title: const Text('Reject Task'),
+          title: const Text('Reject Task'),
           content: TextField(
             controller: controller,
             maxLines: 3,
@@ -214,7 +211,7 @@ class _TaskDetailsScreenViewState extends State<TaskDetailsScreenView> {
                 result = text;
                 Navigator.of(context).pop();
               },
-            child: const Text('Reject'),
+              child: const Text('Reject'),
             ),
           ],
         );
@@ -361,7 +358,7 @@ class _TaskDetailsScreenViewState extends State<TaskDetailsScreenView> {
                             borderRadius: BorderRadius.circular(8),
                             child: _AuthorizedImage(
                               imageUrl: photoUrls[index],
-                              width: 219,
+                              width: photoUrls.length == 1 ? 335 : 219,
                               height: 194,
                               fallbackAsset: AssetsImages.constructionIgm,
                             ),
@@ -668,6 +665,9 @@ class _TaskDetailsScreenViewState extends State<TaskDetailsScreenView> {
 
     final selectedProject = _taskController.selectedProject;
     if (selectedProject != null) {
+      for (final image in selectedProject.imageUrls) {
+        add(image);
+      }
       add(selectedProject.thumbnailUrl ?? '');
       for (final section in selectedProject.sections) {
         for (final item in section.items) {
@@ -854,10 +854,7 @@ class _ChatMessageBubble extends StatelessWidget {
           bubble,
           if (isMine) ...[
             const SizedBox(width: 8),
-            _MessageAvatar(
-              imageUrl: message.senderAvatar,
-              isMine: true,
-            ),
+            _MessageAvatar(imageUrl: message.senderAvatar, isMine: true),
           ],
         ],
       ),
@@ -866,10 +863,7 @@ class _ChatMessageBubble extends StatelessWidget {
 }
 
 class _MessageAvatar extends StatefulWidget {
-  const _MessageAvatar({
-    required this.imageUrl,
-    required this.isMine,
-  });
+  const _MessageAvatar({required this.imageUrl, required this.isMine});
 
   final String imageUrl;
   final bool isMine;
@@ -892,7 +886,9 @@ class _MessageAvatarState extends State<_MessageAvatar> {
     final fallbackOwnAvatar = widget.isMine
         ? Get.find<LoginController>().displayAvatar
         : '';
-    final raw = widget.imageUrl.trim().isEmpty ? fallbackOwnAvatar : widget.imageUrl;
+    final raw = widget.imageUrl.trim().isEmpty
+        ? fallbackOwnAvatar
+        : widget.imageUrl;
     final resolved = _resolveMediaUrl(raw);
     if (resolved.isEmpty) return _fallback();
 

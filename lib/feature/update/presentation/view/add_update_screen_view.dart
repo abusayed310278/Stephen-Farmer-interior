@@ -85,13 +85,13 @@ class _AddUpdateScreenViewState extends State<AddUpdateScreenView> {
                 ); // ✅ controller call
               },
             ),
-            if (_controller.draft.imageFile != null)
+            if (_controller.draft.imageFiles.isNotEmpty)
               ListTile(
                 leading: Icon(Icons.delete_outline, color: muted),
-                title: Text('Remove', style: TextStyle(color: muted)),
+                title: Text('Remove all', style: TextStyle(color: muted)),
                 onTap: () {
                   Navigator.pop(ctx);
-                  _controller.removePhoto(); // ✅ controller call
+                  _controller.clearPhotos();
                 },
               ),
           ],
@@ -146,6 +146,7 @@ class _AddUpdateScreenViewState extends State<AddUpdateScreenView> {
     final cameraIconColor = isInterior
         ? const Color(0xFFD7C5A4)
         : Colors.white70;
+    final selectedImages = _controller.draft.imageFiles;
 
     final isPosting = _controller.isLoading;
     final canPost = _controller.draft.canPost;
@@ -246,7 +247,6 @@ class _AddUpdateScreenViewState extends State<AddUpdateScreenView> {
                     ),
                     const SizedBox(height: 20),
 
-                    // ✅ Image area (preview if selected)
                     CustomPaint(
                       painter: const _DashedRRectPainter(
                         color: accent,
@@ -262,7 +262,7 @@ class _AddUpdateScreenViewState extends State<AddUpdateScreenView> {
                           color: card.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(22),
                         ),
-                        child: _controller.draft.imageFile == null
+                        child: selectedImages.isEmpty
                             ? Center(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -286,7 +286,7 @@ class _AddUpdateScreenViewState extends State<AddUpdateScreenView> {
                                     ),
                                     const SizedBox(height: 14),
                                     Text(
-                                      'Add site photo',
+                                      'Add site photos',
                                       style: GoogleFonts.manrope(
                                         color: titleColor,
                                         fontSize: 12,
@@ -298,13 +298,97 @@ class _AddUpdateScreenViewState extends State<AddUpdateScreenView> {
                                   ],
                                 ),
                               )
-                            : ClipRRect(
-                                borderRadius: BorderRadius.circular(22),
-                                child: Image.file(
-                                  _controller.draft.imageFile!,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
+                            : Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${selectedImages.length} photo${selectedImages.length == 1 ? '' : 's'} selected',
+                                          style: GoogleFonts.manrope(
+                                            color: titleColor,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        TextButton.icon(
+                                          onPressed: isPosting
+                                              ? null
+                                              : _showPickSheet,
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: accent,
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: const Size(0, 32),
+                                            tapTargetSize: MaterialTapTargetSize
+                                                .shrinkWrap,
+                                          ),
+                                          icon: const Icon(
+                                            Icons.add_rounded,
+                                            size: 18,
+                                          ),
+                                          label: const Text('Add more'),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Expanded(
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: selectedImages.length,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(width: 12),
+                                        itemBuilder: (context, index) {
+                                          final imageFile =
+                                              selectedImages[index];
+                                          return Stack(
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                                child: Image.file(
+                                                  imageFile,
+                                                  fit: BoxFit.cover,
+                                                  width: 170,
+                                                  height: double.infinity,
+                                                ),
+                                              ),
+                                              Positioned(
+                                                top: 8,
+                                                right: 8,
+                                                child: GestureDetector(
+                                                  onTap: isPosting
+                                                      ? null
+                                                      : () => _controller
+                                                            .removePhotoAt(
+                                                              index,
+                                                            ),
+                                                  child: Container(
+                                                    width: 28,
+                                                    height: 28,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black
+                                                          .withValues(
+                                                            alpha: 0.55,
+                                                          ),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.close_rounded,
+                                                      color: Colors.white,
+                                                      size: 18,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                       ),

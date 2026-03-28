@@ -59,9 +59,21 @@ class NotificationScreenView extends GetView<NotificationController> {
                   children: [
                     Row(
                       children: [
-                        SizedBox(
-                          width: 128,
-                          height: 27,
+                        IconButton(
+                          onPressed: Get.back,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                          icon: Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 18,
+                            color: titleColor,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(

@@ -100,6 +100,7 @@ class TaskProjectModel extends TaskProjectEntity {
     required super.projectName,
     required super.projectAddress,
     super.thumbnailUrl,
+    super.imageUrls,
     required super.actionsNeededCount,
     required super.actionsNeededMessage,
     required super.sections,
@@ -135,6 +136,11 @@ class TaskProjectModel extends TaskProjectEntity {
     final genericImage = imageFromCollection.isNotEmpty
         ? imageFromCollection
         : projectImageFromCollection;
+    final projectImageUrls = _mergeImageUrls(
+      _readImageUrls(json),
+      _readImageUrls(project),
+      genericImage.isNotEmpty ? <String>[genericImage] : const <String>[],
+    );
 
     final thumbnailUrl = _readString(
       json,
@@ -181,6 +187,7 @@ class TaskProjectModel extends TaskProjectEntity {
         ], fallback: "N/A"),
       ),
       thumbnailUrl: thumbnailUrl.isEmpty ? null : thumbnailUrl,
+      imageUrls: projectImageUrls,
       actionsNeededCount: resolvedActionsCount,
       actionsNeededMessage: _readString(json, [
         "actionsNeededMessage",
@@ -196,6 +203,7 @@ class TaskProjectModel extends TaskProjectEntity {
       projectName: "Riverside Apartment Renovation",
       projectAddress: "42 Harbor View Drive, Apt 12B",
       thumbnailUrl: AssetsImages.actionsNeeded,
+      imageUrls: [AssetsImages.actionsNeeded],
       actionsNeededCount: 2,
       actionsNeededMessage:
           "Your decisions are required to keep progress on track",
@@ -253,6 +261,9 @@ class TaskProjectModel extends TaskProjectEntity {
       projectAddress: "15 Lakefront Ave, Unit 12",
       thumbnailUrl:
           "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=400&auto=format&fit=crop",
+      imageUrls: [
+        "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=400&auto=format&fit=crop",
+      ],
       actionsNeededCount: 1,
       actionsNeededMessage: "One approval is pending to continue execution.",
       sections: [
@@ -434,11 +445,45 @@ List<String> _readImageUrls(Map<String, dynamic> json) {
       continue;
     }
     if (row is Map<String, dynamic>) {
-      final url = _readString(row, ['url', 'imageUrl', 'src']);
+      final url = _readString(row, [
+        'url',
+        'imageUrl',
+        'image_url',
+        'image',
+        'secureUrl',
+        'secure_url',
+        'src',
+        'path',
+        'location',
+      ]);
       if (url.isNotEmpty) {
         urls.add(url);
       }
     }
   }
   return urls;
+}
+
+List<String> _mergeImageUrls(
+  List<String> first,
+  List<String> second, [
+  List<String> third = const <String>[],
+]) {
+  final merged = <String>[];
+  final seen = <String>{};
+
+  void addAll(List<String> values) {
+    for (final value in values) {
+      final normalized = value.trim();
+      if (normalized.isEmpty) continue;
+      if (seen.add(normalized)) {
+        merged.add(normalized);
+      }
+    }
+  }
+
+  addAll(first);
+  addAll(second);
+  addAll(third);
+  return merged;
 }
