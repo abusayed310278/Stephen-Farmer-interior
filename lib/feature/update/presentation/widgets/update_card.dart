@@ -46,9 +46,12 @@ class UpdatePostCard extends StatelessWidget {
 
     final fallbackImage =
         'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop';
-    final postImage = (item.thumbnailUrl?.trim().isNotEmpty ?? false)
-        ? item.thumbnailUrl!.trim()
-        : fallbackImage;
+
+    final postImages = _collectPostImageUrls(
+      imageUrls: item.imageUrls,
+      thumbnailUrl: item.thumbnailUrl,
+      fallbackImage: fallbackImage,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -104,18 +107,11 @@ class UpdatePostCard extends StatelessWidget {
             textColor: contentTextColor,
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 220,
-            width: double.infinity,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                postImage,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Image.network(fallbackImage, fit: BoxFit.cover),
-              ),
-            ),
+          _UpdateMediaGallery(
+            imageUrls: postImages,
+            fallbackImage: fallbackImage,
+            borderRadius: 10,
+            isInteriorTheme: isInteriorTheme,
           ),
           const SizedBox(height: 12),
           Row(
@@ -185,6 +181,190 @@ class UpdatePostCard extends StatelessWidget {
   }
 }
 
+class _UpdateMediaGallery extends StatefulWidget {
+  const _UpdateMediaGallery({
+    required this.imageUrls,
+    required this.fallbackImage,
+    required this.borderRadius,
+    required this.isInteriorTheme,
+  });
+
+  final List<String> imageUrls;
+  final String fallbackImage;
+  final double borderRadius;
+  final bool isInteriorTheme;
+
+  @override
+  State<_UpdateMediaGallery> createState() => _UpdateMediaGalleryState();
+}
+
+class _UpdateMediaGalleryState extends State<_UpdateMediaGallery> {
+  late final Future<String?> _tokenFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _tokenFuture = TokenManager.getToken();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: _tokenFuture,
+      builder: (context, snapshot) {
+        final token = snapshot.data?.trim() ?? '';
+        final headers = token.isEmpty
+            ? null
+            : <String, String>{'Authorization': 'Bearer $token'};
+
+        return _buildLayout(headers);
+      },
+    );
+  }
+
+  Widget _buildLayout(Map<String, String>? headers) {
+    const gap = 4.0;
+    final urls = widget.imageUrls;
+    final count = urls.length;
+
+    Widget imageTile(String url, {int? extraCount}) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            url,
+            fit: BoxFit.cover,
+            headers: headers,
+            errorBuilder: (_, __, ___) => _imageFallback(),
+          ),
+          if (extraCount != null && extraCount > 0)
+            Container(
+              color: Colors.black.withValues(alpha: .45),
+              alignment: Alignment.center,
+              child: Text(
+                '+$extraCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    Widget rowTiles(List<Widget> children) {
+      return Row(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            Expanded(child: children[i]),
+            if (i != children.length - 1) const SizedBox(width: gap),
+          ],
+        ],
+      );
+    }
+
+    Widget layout;
+    double height;
+
+    if (count <= 1) {
+      height = 220;
+      layout = imageTile(urls.first);
+    } else if (count == 2) {
+      height = 220;
+      layout = rowTiles([
+        imageTile(urls[0]),
+        imageTile(urls[1]),
+      ]);
+    } else if (count == 3) {
+      height = 240;
+      layout = Column(
+        children: [
+          Expanded(child: imageTile(urls[0])),
+          const SizedBox(height: gap),
+          Expanded(
+            child: rowTiles([
+              imageTile(urls[1]),
+              imageTile(urls[2]),
+            ]),
+          ),
+        ],
+      );
+    } else if (count == 4) {
+      height = 240;
+      layout = Column(
+        children: [
+          Expanded(
+            child: rowTiles([
+              imageTile(urls[0]),
+              imageTile(urls[1]),
+            ]),
+          ),
+          const SizedBox(height: gap),
+          Expanded(
+            child: rowTiles([
+              imageTile(urls[2]),
+              imageTile(urls[3]),
+            ]),
+          ),
+        ],
+      );
+    } else {
+      height = 250;
+      final extras = count - 5;
+      layout = Column(
+        children: [
+          Expanded(
+            child: rowTiles([
+              imageTile(urls[0]),
+              imageTile(urls[1]),
+            ]),
+          ),
+          const SizedBox(height: gap),
+          Expanded(
+            child: rowTiles([
+              imageTile(urls[2]),
+              imageTile(urls[3]),
+              imageTile(urls[4], extraCount: extras > 0 ? extras : null),
+            ]),
+          ),
+        ],
+      );
+    }
+
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        child: ColoredBox(
+          color: widget.isInteriorTheme
+              ? const Color(0xFFE7E1D5)
+              : Colors.black.withValues(alpha: .18),
+          child: layout,
+        ),
+      ),
+    );
+  }
+
+  Widget _imageFallback() {
+    return Container(
+      color: widget.isInteriorTheme
+          ? const Color(0xFFDCD5C6)
+          : Colors.white.withValues(alpha: .08),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.image_not_supported_outlined,
+        color: widget.isInteriorTheme
+            ? const Color(0xFF7B6F5C)
+            : Colors.white.withValues(alpha: .75),
+        size: 22,
+      ),
+    );
+  }
+}
+
 class _AuthorAvatar extends StatelessWidget {
   const _AuthorAvatar({
     required this.imageUrl,
@@ -213,50 +393,6 @@ class _AuthorAvatar extends StatelessWidget {
     }
 
     return _buildPlaceholder();
-  }
-
-  String _resolveMediaUrl(String raw) {
-    final value = raw.trim().replaceAll('\\', '/');
-    if (value.isEmpty || value.toLowerCase() == 'null') return '';
-
-    if (value.startsWith('{') && value.contains('url:')) {
-      final match = RegExp(r'url:\s*([^,}]+)').firstMatch(value);
-      final extracted = match?.group(1)?.trim() ?? '';
-      if (extracted.isEmpty) return '';
-      return _resolveMediaUrl(extracted);
-    }
-
-    final lower = value.toLowerCase();
-    if (lower.startsWith('http://') || lower.startsWith('https://')) {
-      return value;
-    }
-    if (value.startsWith('//')) return 'https:$value';
-
-    final origin = _apiOrigin();
-    if (origin.isEmpty) return value;
-    if (value.startsWith('/')) return '$origin$value';
-    return '$origin/$value';
-  }
-
-  String _apiOrigin() {
-    final trimmed = baseUrl.trim();
-    if (trimmed.isEmpty) return '';
-    final normalized = trimmed.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
-    final uri = Uri.tryParse(normalized);
-    if (uri == null || uri.host.isEmpty) return normalized;
-
-    var host = uri.host;
-    if (!kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android &&
-        (host == 'localhost' || host == '127.0.0.1')) {
-      host = '10.0.2.2';
-    }
-
-    return Uri(
-      scheme: uri.scheme,
-      host: host,
-      port: uri.hasPort ? uri.port : null,
-    ).toString();
   }
 
   Widget _buildPlaceholder() {
@@ -459,4 +595,81 @@ String _timeAgo(DateTime dateTime) {
   if (diff.inHours < 1) return '${diff.inMinutes}M AGO';
   if (diff.inDays < 1) return '${diff.inHours}H AGO';
   return '${diff.inDays}D AGO';
+}
+
+List<String> _collectPostImageUrls({
+  required List<String> imageUrls,
+  required String? thumbnailUrl,
+  required String fallbackImage,
+}) {
+  final resolved = <String>[];
+  final seen = <String>{};
+
+  void add(String rawUrl) {
+    final normalized = _resolveMediaUrl(rawUrl);
+    if (normalized.isEmpty) return;
+    if (seen.add(normalized)) {
+      resolved.add(normalized);
+    }
+  }
+
+  for (final imageUrl in imageUrls) {
+    add(imageUrl);
+  }
+
+  if (resolved.isEmpty &&
+      thumbnailUrl != null &&
+      thumbnailUrl.trim().isNotEmpty) {
+    add(thumbnailUrl);
+  }
+
+  if (resolved.isEmpty) {
+    resolved.add(fallbackImage);
+  }
+
+  return resolved;
+}
+
+String _resolveMediaUrl(String raw) {
+  final value = raw.trim().replaceAll('\\', '/');
+  if (value.isEmpty || value.toLowerCase() == 'null') return '';
+
+  if (value.startsWith('{') && value.contains('url:')) {
+    final match = RegExp(r'url:\s*([^,}]+)').firstMatch(value);
+    final extracted = match?.group(1)?.trim() ?? '';
+    if (extracted.isEmpty) return '';
+    return _resolveMediaUrl(extracted);
+  }
+
+  final lower = value.toLowerCase();
+  if (lower.startsWith('http://') || lower.startsWith('https://')) {
+    return value;
+  }
+  if (value.startsWith('//')) return 'https:$value';
+
+  final origin = _apiOrigin();
+  if (origin.isEmpty) return value;
+  if (value.startsWith('/')) return '$origin$value';
+  return '$origin/$value';
+}
+
+String _apiOrigin() {
+  final trimmed = baseUrl.trim();
+  if (trimmed.isEmpty) return '';
+  final normalized = trimmed.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+  final uri = Uri.tryParse(normalized);
+  if (uri == null || uri.host.isEmpty) return normalized;
+
+  var host = uri.host;
+  if (!kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.android &&
+      (host == 'localhost' || host == '127.0.0.1')) {
+    host = '10.0.2.2';
+  }
+
+  return Uri(
+    scheme: uri.scheme,
+    host: host,
+    port: uri.hasPort ? uri.port : null,
+  ).toString();
 }
