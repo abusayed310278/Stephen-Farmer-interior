@@ -19,14 +19,32 @@ class NotificationScreenView extends GetView<NotificationController> {
       final role = authController.role.value;
       final isInterior = RoleBgColor.isInterior(role);
 
-      final Color titleColor = isInterior ? const Color(0xFF1D1D1D) : Colors.white;
+      final Color titleColor = isInterior
+          ? const Color(0xFF1D1D1D)
+          : Colors.white;
       final Color actionColor = const Color(0xFFA77935);
-      final Color sectionColor = isInterior ? const Color(0xFF7D7D7D) : Colors.white;
-      final Color cardBackground = isInterior ? const Color(0xFFD9D6CD) : const Color(0xFF1A2329);
-      final Color cardBorder = isInterior ? const Color(0xFF8F8A81) : const Color(0xFF4A565D);
-      final Color subtitleColor = isInterior ? const Color(0xFF585858) : const Color(0xFF8E8E93);
-      final Color messageColor = isInterior ? const Color(0xFF4C4C4C) : Colors.white;
-      final sectionTextStyle = GoogleFonts.manrope(color: sectionColor, fontSize: 16, fontWeight: FontWeight.w600, height: 1, letterSpacing: 0);
+      final Color sectionColor = isInterior
+          ? const Color(0xFF7D7D7D)
+          : Colors.white;
+      final Color cardBackground = isInterior
+          ? const Color(0xFFD9D6CD)
+          : const Color(0xFF1A2329);
+      final Color cardBorder = isInterior
+          ? const Color(0xFF8F8A81)
+          : const Color(0xFF4A565D);
+      final Color subtitleColor = isInterior
+          ? const Color(0xFF585858)
+          : const Color(0xFF8E8E93);
+      final Color messageColor = isInterior
+          ? const Color(0xFF4C4C4C)
+          : Colors.white;
+      final sectionTextStyle = GoogleFonts.manrope(
+        color: sectionColor,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        height: 1,
+        letterSpacing: 0,
+      );
 
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: RoleBgColor.overlayStyle(role),
@@ -41,21 +59,32 @@ class NotificationScreenView extends GetView<NotificationController> {
                   children: [
                     Row(
                       children: [
-                        InkWell(
-                          onTap: () {
-                            Get.back();
-                          },
-                          child: Icon(Icons.arrow_back_ios, color: Colors.black),
+                        IconButton(
+                          onPressed: Get.back,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                          icon: Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 18,
+                            color: titleColor,
+                          ),
                         ),
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 128,
-                          height: 27,
+                        const SizedBox(width: 10),
+                        Expanded(
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
                               'Notifications',
-                              style: GoogleFonts.manrope(color: titleColor, fontSize: 20, fontWeight: FontWeight.w700, height: 1, letterSpacing: 0),
+                              style: GoogleFonts.manrope(
+                                color: titleColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                height: 1,
+                                letterSpacing: 0,
+                              ),
                             ),
                           ),
                         ),
@@ -64,11 +93,27 @@ class NotificationScreenView extends GetView<NotificationController> {
                           child: Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: controller.hasUnread && !controller.isMarkingAll.value ? controller.markAllAsRead : null,
-                              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                              onPressed:
+                                  controller.hasUnread &&
+                                      !controller.isMarkingAll.value
+                                  ? controller.markAllAsRead
+                                  : null,
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                               child: Text(
-                                controller.isMarkingAll.value ? 'Marking...' : 'Mark all as read',
-                                style: GoogleFonts.manrope(color: actionColor, fontSize: 14, fontWeight: FontWeight.w500, height: 1, letterSpacing: 0),
+                                controller.isMarkingAll.value
+                                    ? 'Marking...'
+                                    : 'Mark all as read',
+                                style: GoogleFonts.manrope(
+                                  color: actionColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1,
+                                  letterSpacing: 0,
+                                ),
                               ),
                             ),
                           ),
@@ -76,7 +121,13 @@ class NotificationScreenView extends GetView<NotificationController> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Divider(color: isInterior ? const Color(0xFF9A968E) : const Color(0xFF3A454C), thickness: 1, height: 1),
+                    Divider(
+                      color: isInterior
+                          ? const Color(0xFF9A968E)
+                          : const Color(0xFF3A454C),
+                      thickness: 1,
+                      height: 1,
+                    ),
                     const SizedBox(height: 10),
                     Expanded(
                       child: controller.isLoading.value
@@ -87,13 +138,16 @@ class NotificationScreenView extends GetView<NotificationController> {
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 padding: EdgeInsets.zero,
                                 children: [
-                                  if (controller.todayNotifications.isNotEmpty) ...[
+                                  if (controller
+                                      .todayNotifications
+                                      .isNotEmpty) ...[
                                     Text('Today', style: sectionTextStyle),
                                     const SizedBox(height: 10),
                                     ...controller.todayNotifications.map(
                                       (item) => _NotificationCard(
                                         item: item,
-                                        onTap: () => controller.markSingleAsRead(item),
+                                        onTap: () =>
+                                            controller.markSingleAsRead(item),
                                         isInterior: isInterior,
                                         cardBackground: cardBackground,
                                         cardBorder: cardBorder,
@@ -104,13 +158,16 @@ class NotificationScreenView extends GetView<NotificationController> {
                                     ),
                                     const SizedBox(height: 14),
                                   ],
-                                  if (controller.yesterdayNotifications.isNotEmpty) ...[
+                                  if (controller
+                                      .yesterdayNotifications
+                                      .isNotEmpty) ...[
                                     Text('Yesterday', style: sectionTextStyle),
                                     const SizedBox(height: 10),
                                     ...controller.yesterdayNotifications.map(
                                       (item) => _NotificationCard(
                                         item: item,
-                                        onTap: () => controller.markSingleAsRead(item),
+                                        onTap: () =>
+                                            controller.markSingleAsRead(item),
                                         isInterior: isInterior,
                                         cardBackground: cardBackground,
                                         cardBorder: cardBorder,
@@ -121,13 +178,16 @@ class NotificationScreenView extends GetView<NotificationController> {
                                     ),
                                     const SizedBox(height: 14),
                                   ],
-                                  if (controller.olderNotifications.isNotEmpty) ...[
+                                  if (controller
+                                      .olderNotifications
+                                      .isNotEmpty) ...[
                                     Text('Earlier', style: sectionTextStyle),
                                     const SizedBox(height: 10),
                                     ...controller.olderNotifications.map(
                                       (item) => _NotificationCard(
                                         item: item,
-                                        onTap: () => controller.markSingleAsRead(item),
+                                        onTap: () =>
+                                            controller.markSingleAsRead(item),
                                         isInterior: isInterior,
                                         cardBackground: cardBackground,
                                         cardBorder: cardBorder,
@@ -137,17 +197,30 @@ class NotificationScreenView extends GetView<NotificationController> {
                                       ),
                                     ),
                                   ],
-                                  if (controller.notifications.isEmpty && controller.errorMessage.value.isEmpty)
+                                  if (controller.notifications.isEmpty &&
+                                      controller.errorMessage.value.isEmpty)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 42),
                                       child: Center(
-                                        child: Text('No notifications yet', style: TextStyle(color: subtitleColor, fontSize: 14)),
+                                        child: Text(
+                                          'No notifications yet',
+                                          style: TextStyle(
+                                            color: subtitleColor,
+                                            fontSize: 14,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   if (controller.errorMessage.value.isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 18),
-                                      child: Text(controller.errorMessage.value, style: const TextStyle(color: Color(0xFFFF7A7A), fontSize: 12)),
+                                      child: Text(
+                                        controller.errorMessage.value,
+                                        style: const TextStyle(
+                                          color: Color(0xFFFF7A7A),
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ),
                                 ],
                               ),
@@ -208,8 +281,15 @@ class _NotificationCard extends StatelessWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: BoxDecoration(color: colors.background, borderRadius: BorderRadius.circular(8)),
-                child: Icon(_resolveIcon(item.type), size: 24, color: colors.foreground),
+                decoration: BoxDecoration(
+                  color: colors.background,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  _resolveIcon(item.type),
+                  size: 24,
+                  color: colors.foreground,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -223,15 +303,30 @@ class _NotificationCard extends StatelessWidget {
                             _toHeaderText(item.type),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.manrope(color: subtitleColor, fontSize: 12, fontWeight: FontWeight.w500, height: 16 / 12, letterSpacing: 0),
+                            style: GoogleFonts.manrope(
+                              color: subtitleColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              height: 16 / 12,
+                              letterSpacing: 0,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           timeLabel,
-                          style: GoogleFonts.manrope(color: subtitleColor, fontSize: 12, fontWeight: FontWeight.w500, height: 16 / 12, letterSpacing: 0),
+                          style: GoogleFonts.manrope(
+                            color: subtitleColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            height: 16 / 12,
+                            letterSpacing: 0,
+                          ),
                         ),
-                        if (!item.isRead) ...[const SizedBox(width: 6), const _UnreadDot()],
+                        if (!item.isRead) ...[
+                          const SizedBox(width: 6),
+                          const _UnreadDot(),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -239,7 +334,15 @@ class _NotificationCard extends StatelessWidget {
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.manrope(color: messageColor, fontSize: 14, fontWeight: item.isRead ? FontWeight.w600 : FontWeight.w700, height: 1, letterSpacing: 0),
+                      style: GoogleFonts.manrope(
+                        color: messageColor,
+                        fontSize: 14,
+                        fontWeight: item.isRead
+                            ? FontWeight.w600
+                            : FontWeight.w700,
+                        height: 1,
+                        letterSpacing: 0,
+                      ),
                     ),
                     if (item.message.trim().isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -247,7 +350,11 @@ class _NotificationCard extends StatelessWidget {
                         item.message,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: subtitleColor, fontSize: 14, fontWeight: FontWeight.w400),
+                        style: TextStyle(
+                          color: subtitleColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ],
                   ],
@@ -271,7 +378,11 @@ class _NotificationCard extends StatelessWidget {
       return 'Budget Alert';
     }
 
-    return normalized.split(RegExp(r'[_\-\s]+')).where((part) => part.isNotEmpty).map((part) => '${part[0].toUpperCase()}${part.substring(1)}').join(' ');
+    return normalized
+        .split(RegExp(r'[_\-\s]+'))
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
   }
 
   IconData _resolveIcon(String type) {
@@ -280,7 +391,9 @@ class _NotificationCard extends StatelessWidget {
     if (normalized.contains('site') || normalized.contains('update')) {
       return Icons.photo_camera_rounded;
     }
-    if (normalized.contains('financial') || normalized.contains('invoice') || normalized.contains('payment')) {
+    if (normalized.contains('financial') ||
+        normalized.contains('invoice') ||
+        normalized.contains('payment')) {
       return Icons.account_balance_wallet_rounded;
     }
     if (normalized.contains('task')) {
@@ -300,26 +413,58 @@ class _NotificationCard extends StatelessWidget {
     final normalized = type.trim().toLowerCase();
 
     if (normalized.contains('site') || normalized.contains('update')) {
-      return _IconColors(background: isInterior ? const Color(0xFF34352E) : const Color(0xFF2A2F2A), foreground: const Color(0xFFE0B32F));
+      return _IconColors(
+        background: isInterior
+            ? const Color(0xFF34352E)
+            : const Color(0xFF2A2F2A),
+        foreground: const Color(0xFFE0B32F),
+      );
     }
 
-    if (normalized.contains('financial') || normalized.contains('invoice') || normalized.contains('payment')) {
-      return _IconColors(background: isInterior ? const Color(0xFF1E463F) : const Color(0xFF163A35), foreground: const Color(0xFF1BE4A4));
+    if (normalized.contains('financial') ||
+        normalized.contains('invoice') ||
+        normalized.contains('payment')) {
+      return _IconColors(
+        background: isInterior
+            ? const Color(0xFF1E463F)
+            : const Color(0xFF163A35),
+        foreground: const Color(0xFF1BE4A4),
+      );
     }
 
     if (normalized.contains('task')) {
-      return _IconColors(background: isInterior ? const Color(0xFF1A3358) : const Color(0xFF1A2F4B), foreground: const Color(0xFF4C95FF));
+      return _IconColors(
+        background: isInterior
+            ? const Color(0xFF1A3358)
+            : const Color(0xFF1A2F4B),
+        foreground: const Color(0xFF4C95FF),
+      );
     }
 
     if (normalized.contains('document') || normalized.contains('file')) {
-      return _IconColors(background: isInterior ? const Color(0xFF3B352A) : const Color(0xFF2E3027), foreground: const Color(0xFFF0A500));
+      return _IconColors(
+        background: isInterior
+            ? const Color(0xFF3B352A)
+            : const Color(0xFF2E3027),
+        foreground: const Color(0xFFF0A500),
+      );
     }
 
     if (normalized.contains('budget') || normalized.contains('alert')) {
-      return _IconColors(background: isInterior ? const Color(0xFF432D39) : const Color(0xFF3A2731), foreground: const Color(0xFFFF4D73));
+      return _IconColors(
+        background: isInterior
+            ? const Color(0xFF432D39)
+            : const Color(0xFF3A2731),
+        foreground: const Color(0xFFFF4D73),
+      );
     }
 
-    return _IconColors(background: isInterior ? const Color(0xFF3A3A3A) : const Color(0xFF29343A), foreground: const Color(0xFFD09A2F));
+    return _IconColors(
+      background: isInterior
+          ? const Color(0xFF3A3A3A)
+          : const Color(0xFF29343A),
+      foreground: const Color(0xFFD09A2F),
+    );
   }
 }
 
@@ -331,7 +476,10 @@ class _UnreadDot extends StatelessWidget {
     return Container(
       width: 8,
       height: 8,
-      decoration: const BoxDecoration(color: Color(0xFFEDA83A), shape: BoxShape.circle),
+      decoration: const BoxDecoration(
+        color: Color(0xFFEDA83A),
+        shape: BoxShape.circle,
+      ),
     );
   }
 }

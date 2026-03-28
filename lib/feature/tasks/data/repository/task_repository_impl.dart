@@ -268,8 +268,14 @@ List<TaskProjectEntity> _mergeWithProjectCatalog(
             row['attachments'],
           ]);
 
+    final mergedImageUrls = _mergeProjectImageUrls(project, row);
+    final sameImages =
+        mergedImageUrls.length == project.imageUrls.length &&
+        mergedImageUrls.every(project.imageUrls.contains);
+
     if (useAddress == project.projectAddress &&
-        resolvedThumb == (project.thumbnailUrl ?? '').trim()) {
+        resolvedThumb == (project.thumbnailUrl ?? '').trim() &&
+        sameImages) {
       return project;
     }
 
@@ -280,6 +286,7 @@ List<TaskProjectEntity> _mergeWithProjectCatalog(
       thumbnailUrl: resolvedThumb.isEmpty
           ? project.thumbnailUrl
           : resolvedThumb,
+      imageUrls: mergedImageUrls,
       actionsNeededCount: project.actionsNeededCount,
       actionsNeededMessage: project.actionsNeededMessage,
       sections: project.sections,
@@ -347,6 +354,18 @@ List<TaskProjectEntity> _mergeWithProjectCatalog(
       projectName: name.isEmpty ? 'Untitled Project' : name,
       projectAddress: address.isEmpty ? 'N/A' : address,
       thumbnailUrl: thumbnail.isEmpty ? null : thumbnail,
+      imageUrls: _readAllImageValues(<dynamic>[
+        row['images'],
+        row['photos'],
+        row['attachments'],
+        row['thumbnailUrl'],
+        row['thumbnail'],
+        row['thumb'],
+        row['imageUrl'],
+        row['image'],
+        row['coverImage'],
+        row['projectImage'],
+      ]),
       actionsNeededCount: 0,
       actionsNeededMessage: 'No actions needed right now',
       sections: const <TaskSectionEntity>[],
@@ -383,6 +402,7 @@ List<TaskProjectEntity> _hydrateMissingThumbnails(
       projectName: project.projectName,
       projectAddress: project.projectAddress,
       thumbnailUrl: resolved,
+      imageUrls: project.imageUrls,
       actionsNeededCount: project.actionsNeededCount,
       actionsNeededMessage: project.actionsNeededMessage,
       sections: project.sections,
@@ -447,6 +467,7 @@ List<TaskProjectEntity> _buildProjectsFromTaskRows(
       projectName: _resolveProjectName(taskRows.first, meta),
       projectAddress: _resolveProjectAddress(taskRows.first, meta),
       thumbnailUrl: _resolveProjectThumbnail(taskRows.first, meta),
+      imageUrls: _resolveProjectImages(taskRows.first, meta),
       actionsNeededCount: actionsNeededCount,
       actionsNeededMessage: actionsNeededCount > 0
           ? 'Your decisions are required to keep progress on track'
@@ -593,6 +614,34 @@ String? _resolveProjectThumbnail(
   return value.isEmpty ? null : value;
 }
 
+List<String> _resolveProjectImages(
+  Map<String, dynamic> row,
+  Map<String, dynamic> project,
+) {
+  return _readAllImageValues(<dynamic>[
+    row['images'],
+    row['photos'],
+    row['attachments'],
+    row['thumbnailUrl'],
+    row['thumbnail'],
+    row['thumb'],
+    row['imageUrl'],
+    row['image'],
+    row['coverImage'],
+    row['projectImage'],
+    project['images'],
+    project['photos'],
+    project['attachments'],
+    project['thumbnailUrl'],
+    project['thumbnail'],
+    project['thumb'],
+    project['imageUrl'],
+    project['image'],
+    project['coverImage'],
+    project['projectImage'],
+  ]);
+}
+
 String _resolveSectionTitle(Map<String, dynamic> row) {
   final value = _firstNonEmpty(<dynamic>[
     row['section'],
@@ -620,6 +669,69 @@ String _firstImageValue(List<dynamic> values) {
     if (text.isNotEmpty) return text;
   }
   return '';
+}
+
+List<String> _readAllImageValues(List<dynamic> values) {
+  final images = <String>[];
+  final seen = <String>{};
+
+  void addValue(dynamic value) {
+    if (value == null) return;
+    if (value is List) {
+      for (final item in value) {
+        addValue(item);
+      }
+      return;
+    }
+    final text = _extractImageText(value);
+    if (text.isEmpty) return;
+    if (seen.add(text)) {
+      images.add(text);
+    }
+  }
+
+  for (final value in values) {
+    addValue(value);
+  }
+  return images;
+}
+
+List<String> _mergeProjectImageUrls(
+  TaskProjectEntity project,
+  Map<String, dynamic> row,
+) {
+  final merged = <String>[];
+  final seen = <String>{};
+
+  void add(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return;
+    if (seen.add(normalized)) {
+      merged.add(normalized);
+    }
+  }
+
+  for (final image in project.imageUrls) {
+    add(image);
+  }
+  for (final image in _readAllImageValues(<dynamic>[
+    row['images'],
+    row['photos'],
+    row['attachments'],
+    row['thumbnailUrl'],
+    row['thumbnail'],
+    row['thumb'],
+    row['imageUrl'],
+    row['image'],
+    row['coverImage'],
+    row['projectImage'],
+  ])) {
+    add(image);
+  }
+  if (merged.isEmpty) {
+    add(project.thumbnailUrl ?? '');
+  }
+  return merged;
 }
 
 String _extractText(dynamic value) {

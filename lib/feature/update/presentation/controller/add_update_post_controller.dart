@@ -10,7 +10,7 @@ class AddUpdateController extends ChangeNotifier {
 
   PostDraftModel _draft = const PostDraftModel(
     description: '',
-    imageFile: null,
+    imageFiles: <File>[],
   );
   PostDraftModel get draft => _draft;
 
@@ -31,9 +31,16 @@ class AddUpdateController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final File? file = await repo.pickImage(source);
-      if (file != null) {
-        _draft = _draft.copyWith(imageFile: file);
+      final files = await repo.pickImages(source);
+      if (files.isNotEmpty) {
+        final merged = <File>[..._draft.imageFiles];
+        final seen = merged.map((file) => file.path).toSet();
+        for (final file in files) {
+          if (seen.add(file.path)) {
+            merged.add(file);
+          }
+        }
+        _draft = _draft.copyWith(imageFiles: merged);
       }
     } catch (_) {
       _error = 'Failed to pick image';
@@ -43,8 +50,15 @@ class AddUpdateController extends ChangeNotifier {
     }
   }
 
-  void removePhoto() {
-    _draft = _draft.copyWith(imageFile: null);
+  void removePhotoAt(int index) {
+    if (index < 0 || index >= _draft.imageFiles.length) return;
+    final updated = <File>[..._draft.imageFiles]..removeAt(index);
+    _draft = _draft.copyWith(imageFiles: updated);
+    notifyListeners();
+  }
+
+  void clearPhotos() {
+    _draft = _draft.copyWith(imageFiles: const <File>[]);
     notifyListeners();
   }
 
@@ -66,7 +80,7 @@ class AddUpdateController extends ChangeNotifier {
       await repo.createPost(
         projectId: projectId,
         description: _draft.description.trim(),
-        imageFile: _draft.imageFile,
+        imageFiles: _draft.imageFiles,
       );
     } catch (_) {
       _error = 'Failed to create post';

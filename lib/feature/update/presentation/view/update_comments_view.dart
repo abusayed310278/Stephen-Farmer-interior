@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +7,12 @@ import 'package:stephen_farmer/feature/update/data/model/update_model.dart';
 import 'package:stephen_farmer/feature/update/presentation/controller/update_controller.dart';
 
 class UpdateCommentsView extends StatefulWidget {
-  const UpdateCommentsView({super.key, required this.controller, required this.updateId, required this.isInterior});
+  const UpdateCommentsView({
+    super.key,
+    required this.controller,
+    required this.updateId,
+    required this.isInterior,
+  });
 
   final UpdateController controller;
   final String updateId;
@@ -59,10 +63,16 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
     if (text.isEmpty) return;
 
     final authController = Get.find<LoginController>();
-    final currentUserName = authController.displayName.isEmpty ? 'User' : authController.displayName;
-    final currentUserAvatar = authController.displayAvatar.isEmpty ? null : authController.displayAvatar;
+    final currentUserName = authController.displayName.isEmpty
+        ? 'User'
+        : authController.displayName;
+    final currentUserAvatar = authController.displayAvatar.isEmpty
+        ? null
+        : authController.displayAvatar;
 
-    final payloadText = _replyToName != null && !text.startsWith('@') ? '@$_replyToName $text' : text;
+    final payloadText = _replyToName != null && !text.startsWith('@')
+        ? '@$_replyToName $text'
+        : text;
     final tempComment = UpdateCommentModel(
       id: 'local-${DateTime.now().microsecondsSinceEpoch}',
       updateId: widget.updateId,
@@ -81,10 +91,17 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
-      _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
     });
 
-    final added = await widget.controller.addComment(updateId: widget.updateId, comment: payloadText);
+    final added = await widget.controller.addComment(
+      updateId: widget.updateId,
+      comment: payloadText,
+    );
 
     if (!mounted) return;
     setState(() {
@@ -103,11 +120,16 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
   @override
   Widget build(BuildContext context) {
     final isInterior = widget.isInterior;
-    final showBackButton = defaultTargetPlatform == TargetPlatform.android;
-    final panelColor = isInterior ? const Color(0xFFD6D1C7) : const Color(0xFF111B21);
+    final panelColor = isInterior
+        ? const Color(0xFFD6D1C7)
+        : const Color(0xFF111B21);
     final titleColor = isInterior ? Colors.black : Colors.white;
-    final bodyColor = isInterior ? const Color(0xFF181818) : const Color(0xFFF2F2F2);
-    final mutedColor = isInterior ? const Color(0xFF4B4B4B) : const Color(0xFF8E8E93);
+    final bodyColor = isInterior
+        ? const Color(0xFF181818)
+        : const Color(0xFFF2F2F2);
+    final mutedColor = isInterior
+        ? const Color(0xFF4B4B4B)
+        : const Color(0xFF8E8E93);
 
     return Scaffold(
       backgroundColor: panelColor,
@@ -115,23 +137,18 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
         backgroundColor: panelColor,
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: InkWell(
-          onTap: () {
-            Get.back();
-          },
-          child: Icon(Icons.arrow_back_ios, color: Colors.black),
+        leading: IconButton(
+          onPressed: () => Get.back<void>(),
+          icon: const Icon(Icons.chevron_left_rounded),
+          color: titleColor,
         ),
-
-        /*  showBackButton
-            ? IconButton(
-                onPressed: () => Get.back<void>(),
-                icon: const Icon(Icons.chevron_left_rounded),
-                color: titleColor,
-              )
-            : null, */
         title: Text(
           'Comments',
-          style: GoogleFonts.manrope(color: titleColor, fontSize: 22, fontWeight: FontWeight.w700),
+          style: GoogleFonts.manrope(
+            color: titleColor,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: Column(
@@ -143,7 +160,11 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
                 ? Center(
                     child: Text(
                       'No comments yet',
-                      style: GoogleFonts.manrope(color: mutedColor, fontSize: 13, fontWeight: FontWeight.w400),
+                      style: GoogleFonts.manrope(
+                        color: mutedColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   )
                 : Builder(
@@ -151,7 +172,10 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
                       final commentThreads = _buildCommentThreads(_comments);
                       return ListView.separated(
                         controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         itemCount: commentThreads.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 14),
                         itemBuilder: (_, index) {
@@ -173,7 +197,10 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
                                   setState(() {
                                     _replyToName = name;
                                     _textController.text = '@$name ';
-                                    _textController.selection = TextSelection.collapsed(offset: _textController.text.length);
+                                    _textController.selection =
+                                        TextSelection.collapsed(
+                                          offset: _textController.text.length,
+                                        );
                                   });
                                   _inputFocusNode.requestFocus();
                                 },
@@ -183,30 +210,49 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 24),
                                   child: Column(
-                                    children: List.generate(thread.replies.length, (replyIndex) {
-                                      final reply = thread.replies[replyIndex];
-                                      return Padding(
-                                        padding: EdgeInsets.only(bottom: replyIndex == thread.replies.length - 1 ? 0 : 10),
-                                        child: _buildCommentTile(
-                                          comment: reply.comment,
-                                          isInterior: isInterior,
-                                          titleColor: titleColor,
-                                          bodyColor: bodyColor,
-                                          mutedColor: mutedColor,
-                                          messageText: reply.displayText,
-                                          onReply: () {
-                                            final name = reply.comment.userName.trim();
-                                            if (name.isEmpty) return;
-                                            setState(() {
-                                              _replyToName = name;
-                                              _textController.text = '@$name ';
-                                              _textController.selection = TextSelection.collapsed(offset: _textController.text.length);
-                                            });
-                                            _inputFocusNode.requestFocus();
-                                          },
-                                        ),
-                                      );
-                                    }),
+                                    children: List.generate(
+                                      thread.replies.length,
+                                      (replyIndex) {
+                                        final reply =
+                                            thread.replies[replyIndex];
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom:
+                                                replyIndex ==
+                                                    thread.replies.length - 1
+                                                ? 0
+                                                : 10,
+                                          ),
+                                          child: _buildCommentTile(
+                                            comment: reply.comment,
+                                            isInterior: isInterior,
+                                            titleColor: titleColor,
+                                            bodyColor: bodyColor,
+                                            mutedColor: mutedColor,
+                                            messageText: reply.displayText,
+                                            onReply: () {
+                                              final name = reply
+                                                  .comment
+                                                  .userName
+                                                  .trim();
+                                              if (name.isEmpty) return;
+                                              setState(() {
+                                                _replyToName = name;
+                                                _textController.text =
+                                                    '@$name ';
+                                                _textController.selection =
+                                                    TextSelection.collapsed(
+                                                      offset: _textController
+                                                          .text
+                                                          .length,
+                                                    );
+                                              });
+                                              _inputFocusNode.requestFocus();
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ],
@@ -223,11 +269,23 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: isInterior ? const Color(0xFFB0A38D) : const Color(0xFF232A33), borderRadius: BorderRadius.circular(999)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isInterior
+                          ? const Color(0xFFB0A38D)
+                          : const Color(0xFF232A33),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                     child: Text(
                       'Replying to $_replyToName',
-                      style: GoogleFonts.manrope(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.manrope(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -238,7 +296,11 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
                         _textController.clear();
                       });
                     },
-                    child: Icon(Icons.close_rounded, size: 18, color: mutedColor),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: mutedColor,
+                    ),
                   ),
                 ],
               ),
@@ -249,19 +311,35 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
               children: [
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(color: isInterior ? const Color(0xFF7A787A) : const Color(0xFF2B2E37), borderRadius: BorderRadius.circular(999)),
+                    decoration: BoxDecoration(
+                      color: isInterior
+                          ? const Color(0xFF7A787A)
+                          : const Color(0xFF2B2E37),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                     child: TextField(
                       controller: _textController,
                       focusNode: _inputFocusNode,
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _submitComment(),
-                      style: GoogleFonts.manrope(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.manrope(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Write a Comment...',
-                        hintStyle: GoogleFonts.manrope(color: const Color(0xFFDBDBDB), fontSize: 14, fontWeight: FontWeight.w500),
+                        hintStyle: GoogleFonts.manrope(
+                          color: const Color(0xFFDBDBDB),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                         isDense: true,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -270,8 +348,18 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
                 IconButton(
                   onPressed: _isSending ? null : _submitComment,
                   icon: _isSending
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Icon(Icons.send_rounded, size: 30, color: isInterior ? const Color(0xFF8E6500) : const Color(0xFFD09A2F)),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          Icons.send_rounded,
+                          size: 30,
+                          color: isInterior
+                              ? const Color(0xFF8E6500)
+                              : const Color(0xFFD09A2F),
+                        ),
                 ),
               ],
             ),
@@ -296,9 +384,21 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: isInterior ? const Color(0xFFC3BEB4) : const Color(0xFF2D3238),
-          backgroundImage: avatarUrl != null && avatarUrl.trim().isNotEmpty ? NetworkImage(avatarUrl.trim()) : null,
-          child: avatarUrl == null || avatarUrl.trim().isEmpty ? Icon(Icons.person_rounded, size: 18, color: isInterior ? const Color(0xFF6A6358) : const Color(0xFFD0D0D0)) : null,
+          backgroundColor: isInterior
+              ? const Color(0xFFC3BEB4)
+              : const Color(0xFF2D3238),
+          backgroundImage: avatarUrl != null && avatarUrl.trim().isNotEmpty
+              ? NetworkImage(avatarUrl.trim())
+              : null,
+          child: avatarUrl == null || avatarUrl.trim().isEmpty
+              ? Icon(
+                  Icons.person_rounded,
+                  size: 18,
+                  color: isInterior
+                      ? const Color(0xFF6A6358)
+                      : const Color(0xFFD0D0D0),
+                )
+              : null,
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -307,18 +407,32 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
             children: [
               Container(
                 padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
-                decoration: BoxDecoration(color: isInterior ? const Color(0xFFE3DED3) : const Color(0xFF1E2A33), borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(
+                  color: isInterior
+                      ? const Color(0xFFE3DED3)
+                      : const Color(0xFF1E2A33),
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       comment.userName,
-                      style: GoogleFonts.manrope(color: titleColor, fontSize: 13, fontWeight: FontWeight.w700),
+                      style: GoogleFonts.manrope(
+                        color: titleColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       messageText,
-                      style: GoogleFonts.manrope(color: bodyColor, fontSize: 14, fontWeight: FontWeight.w400, height: 1.3),
+                      style: GoogleFonts.manrope(
+                        color: bodyColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                      ),
                     ),
                   ],
                 ),
@@ -328,19 +442,31 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
                 children: [
                   Text(
                     _timeLabel(comment.createdAt),
-                    style: GoogleFonts.manrope(color: mutedColor, fontSize: 12, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.manrope(
+                      color: mutedColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     'Like',
-                    style: GoogleFonts.manrope(color: mutedColor, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.manrope(
+                      color: mutedColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   GestureDetector(
                     onTap: onReply,
                     child: Text(
                       'Reply',
-                      style: GoogleFonts.manrope(color: mutedColor, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: GoogleFonts.manrope(
+                        color: mutedColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -355,18 +481,27 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
   List<_CommentThread> _buildCommentThreads(List<UpdateCommentModel> comments) {
     final threads = <_CommentThread>[];
     for (final comment in comments) {
-      final targetName = _extractReplyTargetName(comment.text, threads.map((thread) => thread.parent.userName).toList());
+      final targetName = _extractReplyTargetName(
+        comment.text,
+        threads.map((thread) => thread.parent.userName).toList(),
+      );
       if (targetName == null) {
         threads.add(_CommentThread(parent: comment, replies: []));
         continue;
       }
-      final parentIndex = threads.lastIndexWhere((thread) => thread.parent.userName.trim().toLowerCase() == targetName.trim().toLowerCase());
+      final parentIndex = threads.lastIndexWhere(
+        (thread) =>
+            thread.parent.userName.trim().toLowerCase() ==
+            targetName.trim().toLowerCase(),
+      );
       if (parentIndex < 0) {
         threads.add(_CommentThread(parent: comment, replies: []));
         continue;
       }
       final replyText = _stripReplyPrefix(comment.text, targetName);
-      threads[parentIndex].replies.add(_ThreadedReply(comment: comment, displayText: replyText));
+      threads[parentIndex].replies.add(
+        _ThreadedReply(comment: comment, displayText: replyText),
+      );
     }
     return threads;
   }
@@ -380,7 +515,8 @@ class _UpdateCommentsViewState extends State<UpdateCommentsView> {
       final trimmedName = name.trim();
       if (trimmedName.isEmpty) continue;
       final tag = '@$trimmedName ';
-      if (trimmedMessage.toLowerCase().startsWith(tag.toLowerCase()) && tag.length > bestLength) {
+      if (trimmedMessage.toLowerCase().startsWith(tag.toLowerCase()) &&
+          tag.length > bestLength) {
         bestMatch = trimmedName;
         bestLength = tag.length;
       }
