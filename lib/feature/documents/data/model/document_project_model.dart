@@ -37,9 +37,28 @@ class RecentDocumentModel extends RecentDocumentEntity {
 
     final nestedDocument = json['document'];
     final nestedUrl = nestedDocument is Map<String, dynamic>
-        ? _readString(nestedDocument, ['url', 'secure_url', 'path'])
+        ? _readString(nestedDocument, [
+            'url',
+            'secure_url',
+            'downloadUrl',
+            'download_url',
+            'fileUrl',
+            'file_url',
+            'src',
+            'path',
+          ])
         : '';
-    final directUrl = _readString(json, ['url', 'fileUrl', 'documentUrl']);
+    final directUrl = _readString(json, [
+      'url',
+      'secure_url',
+      'fileUrl',
+      'file_url',
+      'documentUrl',
+      'document_url',
+      'downloadUrl',
+      'download_url',
+      'path',
+    ]);
     final resolvedUrl = directUrl.trim().isNotEmpty
         ? directUrl.trim()
         : nestedUrl.trim();
@@ -342,14 +361,46 @@ String _formatDateLabel(String source) {
 }
 
 String? _readMimeType(Map<String, dynamic> json) {
-  final direct = _readString(json, ['mimeType']);
+  final direct = _readString(json, [
+    'mimeType',
+    'mime_type',
+    'contentType',
+    'content_type',
+  ]);
   if (direct.trim().isNotEmpty) {
     return direct.trim();
   }
 
+  final document = json['document'];
+  if (document is Map<String, dynamic>) {
+    final nestedDirect = _readString(document, [
+      'mimeType',
+      'mime_type',
+      'contentType',
+      'content_type',
+    ]);
+    if (nestedDirect.trim().isNotEmpty) {
+      return nestedDirect.trim();
+    }
+
+    final format = _readString(document, ['format']).toLowerCase();
+    final resourceType = _readString(document, ['resource_type']).toLowerCase();
+    if (format == 'pdf' ||
+        resourceType == 'pdf' ||
+        (resourceType == 'raw' && format == 'pdf')) {
+      return 'application/pdf';
+    }
+  }
+
   final meta = json['meta'];
   if (meta is Map<String, dynamic>) {
-    final nested = _readString(meta, ['mimeType', 'mime_type', 'type']);
+    final nested = _readString(meta, [
+      'mimeType',
+      'mime_type',
+      'contentType',
+      'content_type',
+      'type',
+    ]);
     if (nested.trim().isNotEmpty) {
       return nested.trim();
     }
