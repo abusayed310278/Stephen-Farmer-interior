@@ -4,7 +4,9 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate {
   private let shareChannel = "app.share/native"
+  private let urlOpenChannel = "app.url_open/native"
   private var nativeShareMethodChannel: FlutterMethodChannel?
+  private var nativeUrlOpenMethodChannel: FlutterMethodChannel?
 
   override func application(
     _ application: UIApplication,
@@ -18,6 +20,16 @@ import UIKit
       )
       nativeShareMethodChannel?.setMethodCallHandler { [weak self] call, result in
         self?.handleNativeShare(call: call, result: result)
+      }
+    }
+
+    if let registrar = registrar(forPlugin: "NativeUrlOpenChannel") {
+      nativeUrlOpenMethodChannel = FlutterMethodChannel(
+        name: urlOpenChannel,
+        binaryMessenger: registrar.messenger()
+      )
+      nativeUrlOpenMethodChannel?.setMethodCallHandler { [weak self] call, result in
+        self?.handleNativeUrlOpen(call: call, result: result)
       }
     }
 
@@ -79,6 +91,35 @@ import UIKit
 
     presenter.present(activityVC, animated: true) {
       result(true)
+    }
+  }
+
+  private func handleNativeUrlOpen(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard call.method == "openUrl" else {
+      result(FlutterMethodNotImplemented)
+      return
+    }
+
+    guard
+      let args = call.arguments as? [String: Any],
+      let rawUrl = args["url"] as? String,
+      let url = URL(string: rawUrl),
+      !rawUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    else {
+      result(
+        FlutterError(
+          code: "INVALID_URL",
+          message: "Missing or invalid URL",
+          details: nil
+        )
+      )
+      return
+    }
+
+    DispatchQueue.main.async {
+      UIApplication.shared.open(url, options: [:]) { success in
+        result(success)
+      }
     }
   }
 }
